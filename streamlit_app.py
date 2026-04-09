@@ -1,118 +1,92 @@
 import streamlit as st
 from datetime import date
 
-st.set_page_config(page_title="Panda Geoteknik Pro Max", layout="wide")
+# Sayfa Ayarları
+st.set_page_config(page_title="Panda Geoteknik Global", layout="wide")
 
-st.title("🏗️ Panda Profesyonel Geoteknik & Şantiye Yönetimi")
-tab1, tab2 = st.tabs(["📊 Detaylı Hakediş & Analiz", "📝 Günlük Rapor & Saha Gideri"])
+# --- DİL VE PARA BİRİMİ SEÇİMİ ---
+st.sidebar.title("🌍 Ayarlar / Настройки")
+dil = st.sidebar.radio("Dil Seçimi / Выбор языка", ["Türkçe", "Русский"])
+para_birimi = st.sidebar.radio("Para Birimi / Валюта", ["TL", "RUB"])
+kur = st.sidebar.number_input("1 TL kaç Ruble? / Курс TL к Рублю", value=2.85)
 
-# --- TAB 1: DETAYLI ANALİZ (HESAP MAKİNESİ) ---
+# Metin Sözlüğü
+T = {
+    "Türkçe": {
+        "baslik": "🏗️ Panda Profesyonel Geoteknik & Şantiye Yönetimi",
+        "tab1": "📊 Detaylı Hakediş & Analiz",
+        "tab2": "📝 Günlük Rapor & Saha Gideri",
+        "birim_fiyat": "💰 Birim Fiyatlar ve Genel Giderler",
+        "imalat_kalem": "🛠️ Tüm İmalat Kalemleri",
+        "kadro": "👤 Kadro ve Süre",
+        "toplam": "PROJE GENEL TOPLAM MALİYETİ",
+        "kalemler": ["Diyafram Duvar", "Fore Kazık", "Boru Kazık", "Jet Grout", "Enjeksiyon", "Ankraj", "Başlık Kirişi", "Strut", "Püskürtme Beton", "Personel & Maaş", "Yemek & Konaklama", "Yakıt Gideri"],
+        "tablo_baslik": ["Kalem", "Metraj", "Beton (m3)", "Donatı/Halat/Çelik", "Maliyet"],
+        "günlük": "📝 Günlük Saha Kayıtları",
+        "rapor_buton": "🚀 Raporu Kapat ve Onayla"
+    },
+    "Русский": {
+        "baslik": "🏗️ Panda Профессиональное Геотехническое Управление",
+        "tab1": "📊 Детальный Расчет и Анализ",
+        "tab2": "📝 Ежедневный Отчет и Расходы",
+        "birim_fiyat": "💰 Единичные Расценки и Расходы",
+        "imalat_kalem": "🛠️ Все Виды Работ",
+        "kadro": "👤 Кадры и Сроки",
+        "toplam": "ОБЩАЯ СТОИМОСТЬ ПРОЕКТА",
+        "kalemler": ["Диафрагменная стена", "Буронабивные сваи", "Трубчатые сваи", "Jet Grout", "Инъектирование", "Анкер", "Обвязочная балка", "Распорка", "Торкрет бетон", "Персонал и З/П", "Питание и Жилье", "Расход Топлива"],
+        "tablo_baslik": ["Вид работ", "Объем", "Бетон (м3)", "Арматура/Канат/Сталь", "Стоимость"],
+        "günlük": "📝 Ежедневные Полевые Записи",
+        "rapor_buton": "🚀 Закрыть и Подтвердить Отчет"
+    }
+}
+
+L = T[dil]
+katsayi = kur if para_birimi == "RUB" else 1.0
+
+# --- ANA PANEL ---
+st.title(L["baslik"])
+tab1, tab2 = st.tabs([L["tab1"], L["tab2"]])
+
 with tab1:
-    with st.expander("💰 Birim Fiyatlar ve Genel Giderler (TL)", expanded=False):
-        f1, f2, f3, f4 = st.columns(4)
-        p_beton = f1.number_input("Beton (m3)", value=2800)
-        p_demir = f2.number_input("Donatı (Ton)", value=30000)
-        p_halat = f3.number_input("Ankraj Halatı (m)", value=130)
-        p_boru = f4.number_input("Boru/Profil (kg)", value=45)
-        
-        f5, f6, f7, f8 = st.columns(4)
-        p_personel = f5.number_input("Günlük Maaş (Ort. TL)", value=1500)
-        p_yemek = f6.number_input("Günlük Yemek (TL/Kişi)", value=250)
-        p_kamp = f7.number_input("Günlük Konaklama (TL/Kişi)", value=400)
-        p_yakit = f8.number_input("Mazot (Litre/TL)", value=45)
+    with st.expander(f"{L['birim_fiyat']} ({para_birimi})", expanded=False):
+        f1, f2, f3 = st.columns(3)
+        p_beton = f1.number_input(f"Beton / Бетон (m3)", value=2800.0) * katsayi
+        p_demir = f2.number_input(f"Donatı / Арматура (Ton)", value=30000.0) * katsayi
+        p_personel = f3.number_input(f"Maaş / Зарплата (Gülük/Ежедневно)", value=1500.0) * katsayi
 
-    st.subheader("🛠️ Tüm İmalat Kalemleri")
+    st.subheader(L["imalat_kalem"])
     c1, c2, c3 = st.columns(3)
-    
-    with c1:
-        d_duvar = st.number_input("Diyafram Duvar (m2)", value=0.0)
-        f_kazik = st.number_input("Fore Kazık (m)", value=0.0)
-        b_kazik = st.number_input("Boru Kazık (m)", value=0.0)
-    
-    with c2:
-        jet_grout = st.number_input("Jet Grout (m)", value=0.0)
-        enjeksiyon = st.number_input("Enjeksiyon (m)", value=0.0)
-        ankraj = st.number_input("Ankraj (Toplam m)", value=0.0)
-    
-    with c3:
-        b_kiris = st.number_input("Başlık Kirişi (m3)", value=0.0)
-        strut = st.number_input("Strut / Çelik Destek (Ton)", value=0.0)
-        p_beton_m2 = st.number_input("Püskürtme Beton (m2)", value=0.0)
+    d_duvar = c1.number_input(f"{L['kalemler'][0]} (m2)", value=0.0)
+    f_kazik = c1.number_input(f"{L['kalemler'][1]} (m)", value=0.0)
+    ankraj = c2.number_input(f"{L['kalemler'][5]} (m)", value=0.0)
+    n_pers = c3.number_input(f"{L['kalemler'][9]} (Kişi/Чел)", value=15)
+    proje_gun = c3.number_input("Süre / Срок (Gün/Дней)", value=30)
 
-    st.divider()
-    
-    st.subheader("👤 Kadro ve Süre")
-    k1, k2, k3, k4 = st.columns(4)
-    n_personel = k1.number_input("Toplam Personel Sayısı", value=15)
-    proje_gun = k2.number_input("Proje Süresi (Gün)", value=30)
-    gunluk_yakit = k3.number_input("Günlük Yakıt Tüketimi (Litre)", value=100)
-
-    # HESAPLAMA MOTORU
-    analiz_verisi = []
-    
-    # İmalat Hesapları
-    def ekle(isim, metraj, beton, demir_halat, maliyet):
-        analiz_verisi.append({"Kalem": isim, "Metraj": metraj, "Beton (m3)": beton, "Donatı/Halat/Çelik": demir_halat, "Maliyet (TL)": f"{maliyet:,.0f}"})
-
-    toplam_imalat_maliyeti = 0
+    # Hesaplama ve Tablo
+    analiz = []
+    toplam = 0
 
     if d_duvar > 0:
-        m = (d_duvar*0.8*p_beton) + ((d_duvar*0.8*120)/1000*p_demir)
-        ekle("Diyafram Duvar", f"{d_duvar} m2", d_duvar*0.8, f"{(d_duvar*0.8*120)/1000:.2f} Ton", m)
-        toplam_imalat_maliyeti += m
-    if f_kazik > 0:
-        m = (f_kazik*0.5*p_beton) + ((f_kazik*0.5*100)/1000*p_demir)
-        ekle("Fore Kazık", f"{f_kazik} m", f_kazik*0.5, f"{(f_kazik*0.5*100)/1000:.2f} Ton", m)
-        toplam_imalat_maliyeti += m
-    if jet_grout > 0:
-        m = jet_grout * 600 # Ortalama çimento/m maliyeti varsayımı
-        ekle("Jet Grout", f"{jet_grout} m", "-", "Çimento Bazlı", m)
-        toplam_imalat_maliyeti += m
-    if ankraj > 0:
-        m = (ankraj*0.05*p_beton) + (ankraj*4*p_halat)
-        ekle("Ankraj", f"{ankraj} m", ankraj*0.05, f"{ankraj*4:.0f} m Halat", m)
-        toplam_imalat_maliyeti += m
-    if strut > 0:
-        m = strut * 1000 * p_boru
-        ekle("Strut", f"{strut} Ton", "-", f"{strut} Ton Profil", m)
-        toplam_imalat_maliyeti += m
-    if p_beton_m2 > 0:
-        m = (p_beton_m2*0.1*p_beton) + (p_beton_m2*1.1*450)
-        ekle("Püskürtme Beton", f"{p_beton_m2} m2", p_beton_m2*0.1, f"{p_beton_m2*1.1:.1f} m2 Hasır", m)
-        toplam_imalat_maliyeti += m
-
-    # Genel Gider Hesapları
-    personel_toplam = n_personel * p_personel * proje_gun
-    yemek_toplam = n_personel * (p_yemek * 3) * proje_gun
-    kamp_toplam = n_personel * p_kamp * proje_gun
-    yakit_toplam = gunluk_yakit * p_yakit * proje_gun
-    genel_gider_toplam = personel_toplam + yemek_toplam + kamp_toplam + yakit_toplam
-
-    ekle("👤 Personel & Maaş", f"{n_personel} Kişi", "-", f"{proje_gun} Gün", personel_toplam)
-    ekle("🍲 Yemek & Konaklama", "Kamp Gideri", "-", "3 Öğün + Yatak", yemek_toplam + kamp_toplam)
-    ekle("⛽ Yakıt Gideri", f"{gunluk_yakit} L/Gün", "-", f"Toplam {gunluk_yakit*proje_gun} L", yakit_toplam)
-
-    st.subheader("📋 Kapsamlı Hakediş Tablosu")
-    st.table(analiz_verisi)
+        cost = (d_duvar*0.8*p_beton) + ((d_duvar*0.8*120)/1000*p_demir)
+        analiz.append({L["tablo_baslik"][0]: L["kalemler"][0], L["tablo_baslik"][1]: f"{d_duvar} m2", L["tablo_baslik"][2]: d_duvar*0.8, L["tablo_baslik"][3]: f"{(d_duvar*0.8*120)/1000:.2f} T", L["tablo_baslik"][4]: f"{cost:,.0f} {para_birimi}"})
+        toplam += cost
     
-    st.error(f"### PROJE GENEL TOPLAM MALİYETİ: {toplam_imalat_maliyeti + genel_gider_toplam:,.2f} TL")
+    # Personel Gideri
+    pers_cost = n_pers * p_personel * proje_gun
+    analiz.append({L["tablo_baslik"][0]: L["kalemler"][9], L["tablo_baslik"][1]: f"{n_pers} Pers.", L["tablo_baslik"][2]: "-", L["tablo_baslik"][3]: f"{proje_gun} Gün", L["tablo_baslik"][4]: f"{pers_cost:,.0f} {para_birimi}"})
+    toplam += pers_cost
 
-# --- TAB 2: GÜNLÜK RAPOR ---
+    st.subheader(f"📋 {L['tab1']}")
+    st.table(analiz)
+    st.error(f"### {L['toplam']}: {toplam:,.2f} {para_birimi}")
+
 with tab2:
-    st.header("📝 Günlük Saha Kayıtları")
-    secilenler = st.multiselect("Bugün yapılan işleri seçin:", ["Diyafram Duvar", "Fore Kazık", "Jet Grout", "Ankraj", "Enjeksiyon", "Boru Kazık", "Başlık Kirişi", "Strut", "Püskürtme Beton"])
-    
+    st.header(L["günlük"])
+    # Dinamik Rapor Alanı (Dil desteğiyle)
+    secilenler = st.multiselect("✅", L["kalemler"][:9])
     if secilenler:
-        rapor_data = []
-        for kalem in secilenler:
-            st.markdown(f"#### {kalem}")
-            r1, r2, r3, r4 = st.columns(4)
-            metraj = r1.number_input(f"Metraj", key=f"r_m_{kalem}")
-            beton = r2.number_input(f"Beton (m3)", key=f"r_b_{kalem}")
-            demir = r3.number_input(f"Donatı/Halat/Çelik", key=f"r_d_{kalem}")
-            notu = r4.text_input(f"Not", key=f"r_n_{kalem}")
-            rapor_data.append({"İmalat": kalem, "Metraj": metraj, "Beton": beton, "Donatı/Halat/Çelik": demir, "Not": notu})
-        
-        if st.button("🚀 Raporu Kapat ve Onayla"):
-            st.success("Günlük Rapor Hazırlandı.")
-            st.table(rapor_data)
+        for s in secilenler:
+            st.write(f"**{s}**")
+            # Giriş kutuları buraya...
+        if st.button(L["rapor_buton"]):
+            st.success("OK!")

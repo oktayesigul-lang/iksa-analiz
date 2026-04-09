@@ -1,106 +1,85 @@
 import streamlit as st
+from datetime import date
 
 # Sayfa Ayarları
-st.set_page_config(page_title="İksa Metraj & Maliyet", layout="wide")
+st.set_page_config(page_title="Panda Mühendislik Çözümleri", layout="wide")
 
-# Dil Seçeneği
-dil = st.sidebar.radio("Dil / Язык", ["Türkçe", "Русский"])
+# ANA BAŞLIK
+st.title("🏗️ Panda Geoteknik & Mühendislik Paneli")
+st.markdown("---")
 
-# Metin Tanımlamaları
-texts = {
-    "Türkçe": {
-        "baslik": "🏗️ İksa Sistemleri Metraj & Maliyet Analizi",
-        "alt_baslik": "Proje parametrelerini girerek anlık maliyet tahmini alabilirsiniz.",
-        "parametreler": "Proje Parametreleri",
-        "birim_fiyatlar": "Birim Fiyatlar (TL)",
-        "iksa_tipi": "İksa Tipi",
-        "uzunluk": "Toplam İksa Uzunluğu (m)",
-        "derinlik": "İksa Derinliği (m)",
-        "genislik": "Genişlik/Çap (cm)",
-        "ankraj": "Ankraj Var mı?",
-        "ankraj_boyu": "Ortalama Ankraj Boyu (m)",
-        "ankraj_araligi": "Yatay Ankraj Aralığı (m)",
-        "hesaplanan": "📊 Hesaplanan Metrajlar",
-        "maliyet_analizi": "💰 Maliyet Analizi",
-        "toplam": "Tahmini Toplam Proje Maliyeti",
-        "kalemler": ["Beton", "Demir", "Kazı", "Ankraj (İşçilik dahil)"]
-    },
-    "Русский": {
-        "baslik": "🏗️ Расчет объемов и стоимости ограждения котлована",
-        "alt_baslik": "Введите параметры проекта для моментальной оценки стоимости.",
-        "parametreler": "Параметры проекта",
-        "birim_fiyatlar": "Цена за единицу (TL)",
-        "iksa_tipi": "Тип ограждения",
-        "uzunluk": "Общая длина (м)",
-        "derinlik": "Глубина (м)",
-        "genislik": "Ширина/Диаметр (см)",
-        "ankraj": "Наличие анкеров?",
-        "ankraj_boyu": "Средняя длина анкера (м)",
-        "ankraj_araligi": "Горизонтальный шаг (м)",
-        "hesaplanan": "📊 Расчетные объемы",
-        "maliyet_analizi": "💰 Анализ стоимости",
-        "toplam": "Ориентировочная общая стоимость",
-        "kalemler": ["Бетон", "Арматура", "Выемка грунта", "Анкеры (вкл. работы)"]
-    }
-}
+# SEKMELERİ OLUŞTURUYORUZ (Bu satır iki ayrı sayfa gibi davranmasını sağlar)
+tab1, tab2 = st.tabs(["💰 Maliyet & Metraj Hesabı", "📝 Günlük Rapor Sistemi"])
 
-t = texts[dil]
+# --- SEKME 1: MALİYET VE METRAJ HESABI ---
+with tab1:
+    st.header("İksa Metraj & Maliyet Analizi")
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("Parametreler")
+        L = st.number_input("Toplam Uzunluk (m)", value=100.0, key="meta_L")
+        H = st.number_input("Derinlik (m)", value=20.0, key="meta_H")
+        W = st.number_input("Genişlik/Çap (cm)", value=80.0, key="meta_W") / 100
+        
+        st.divider()
+        p_beton = st.number_input("Beton m3 Fiyatı (TL)", value=2500, key="p_bet")
+        p_demir = st.number_input("Demir Ton Fiyatı (TL)", value=28000, key="p_dem")
 
-# --- UI TASARIMI ---
-st.title(t["baslik"])
-st.info(t["alt_baslik"])
+    with col2:
+        # Hesaplamalar
+        beton_vol = L * H * W
+        demir_ton = (beton_vol * 110) / 1000
+        toplam_maliyet = (beton_vol * p_beton) + (demir_ton * p_demir)
+        
+        st.subheader("📊 Analiz Sonuçları")
+        res_c1, res_c2 = st.columns(2)
+        res_c1.metric("Beton Hacmi", f"{beton_vol:,.1f} m³")
+        res_c2.metric("Demir Miktarı", f"{demir_ton:,.1f} Ton")
+        
+        st.success(f"### Tahmini Toplam Maliyet: {toplam_maliyet:,.2f} TL")
 
-# Sol Menü - Girişler
-st.sidebar.header(t["parametreler"])
-iksa_tipi = st.sidebar.selectbox(t["iksa_tipi"], ["Diyafram Duvar / Грейфер", "Fore Kazık / БНС"])
-L = st.sidebar.number_input(t["uzunluk"], value=100.0)
-H = st.sidebar.number_input(t["derinlik"], value=20.0)
-W = st.sidebar.number_input(t["genislik"], value=80.0) / 100
+# --- SEKME 2: DİNAMİK GÜNLÜK RAPOR SİSTEMİ ---
+with tab2:
+    st.header("Günlük Rapor Modülü")
+    
+    # Yapılandırma Alanı
+    with st.expander("⚙️ Şantiye Ayarları (Yapılandırma)", expanded=True):
+        santiye_adi = st.text_input("Proje Adı", value="Moskova Projesi", key="s_name")
+        imalat_kalemleri = st.multiselect(
+            "Takip Edilecek Kalemler",
+            ["Panel Kazısı (m2)", "Beton (m3)", "Donatı (Ton)", "Ankraj (m)", "Boş Kazı (m3)"],
+            default=["Panel Kazısı (m2)", "Beton (m3)"],
+            key="s_items"
+        )
+    
+    st.divider()
+    
+    # Günlük Veri Girişi
+    st.subheader(f"📅 Rapor Tarihi: {date.today().strftime('%d/%m/%Y')}")
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        hava = st.selectbox("Hava Durumu", ["Güneşli", "Yağmurlu", "Karlı", "Sert Rüzgarlı"], key="s_weather")
+    with c2:
+        notlar = st.text_area("Saha Notları", key="s_notes")
 
-ankraj_var = st.sidebar.checkbox(t["ankraj"], value=True)
-ankraj_L = 0
-ankraj_adet = 0
-if ankraj_var:
-    ankraj_L = st.sidebar.number_input(t["ankraj_boyu"], value=15.0)
-    ankraj_sira = st.sidebar.slider("Sıra Sayısı / Кол-во рядов", 1, 5, 2)
-    ankraj_adim = st.sidebar.number_input(t["ankraj_araligi"], value=1.5)
-    ankraj_adet = (L / ankraj_adim) * ankraj_sira
+    st.write("---")
+    st.write("#### Günlük İmalat Miktarları")
+    veriler = {}
+    
+    # Dinamik kolonlar
+    if imalat_kalemleri:
+        entry_cols = st.columns(len(imalat_kalemleri))
+        for i, kalem in enumerate(imalat_kalemleri):
+            with entry_cols[i]:
+                deger = st.number_input(f"{kalem}", min_value=0.0, step=0.1, key=f"d_val_{i}")
+                veriler[kalem] = deger
 
-# Birim Fiyatlar
-st.sidebar.header(t["birim_fiyatlar"])
-p_beton = st.sidebar.number_input(f"{t['kalemler'][0]} (m3)", value=2500)
-p_demir = st.sidebar.number_input(f"{t['kalemler'][1]} (Ton)", value=28000)
-p_kazi = st.sidebar.number_input(f"{t['kalemler'][2]} (m3)", value=150)
-p_ankraj = st.sidebar.number_input(f"{t['kalemler'][3]} (m)", value=850)
-
-# --- HESAPLAMALAR ---
-beton_vol = L * H * W
-demir_ton = (beton_vol * 110) / 1000 
-kazi_vol = beton_vol * 1.05 
-ankraj_toplam_m = ankraj_adet * ankraj_L
-
-c_beton = beton_vol * p_beton
-c_demir = demir_ton * p_demir
-c_kazi = kazi_vol * p_kazi
-c_ankraj = ankraj_toplam_m * p_ankraj
-genel_toplam = c_beton + c_demir + c_kazi + c_ankraj
-
-# --- SONUÇLAR ---
-st.header(t["hesaplanan"])
-col1, col2, col3, col4 = st.columns(4)
-col1.metric(t["kalemler"][0], f"{beton_vol:,.1f} m³")
-col2.metric(t["kalemler"][1], f"{demir_ton:,.1f} Ton")
-col3.metric(t["kalemler"][2], f"{kazi_vol:,.1f} m³")
-col4.metric("Ankraj", f"{ankraj_toplam_m:,.0f} m")
-
-st.header(t["maliyet_analizi"])
-data = {
-    "Kalem / Статья": t["kalemler"],
-    "Maliyet / Стоимость (TL)": [f"{c_beton:,.0f}", f"{c_demir:,.0f}", f"{c_kazi:,.0f}", f"{c_ankraj:,.0f}"]
-}
-st.table(data)
-
-st.success(f"### {t['toplam']}: {genel_toplam:,.2f} TL")
+    if st.button("🚀 Raporu Kaydet ve Özetle", key="s_btn"):
+        st.success(f"{santiye_adi} - Günlük Rapor Hazırlandı.")
+        st.table({"İmalat Kalemi": list(veriler.keys()), "Miktar": list(veriler.values())})
 
 # Footer
 st.markdown("---")

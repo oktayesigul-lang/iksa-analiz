@@ -75,6 +75,33 @@ p_ankraj = st.sidebar.number_input(f"{t['kalemler'][3]} (m)", value=850)
 
 # --- HESAPLAMALAR ---
 beton_vol = L * H * W
-demir_ton = (beton_vol * 110) / 1000 # 110kg/m3 varsayılan
-kazi_vol = beton_vol * 1.05 # %5 fire
-ankraj_toplam_m = ankraj_adet * ank
+demir_ton = (beton_vol * 110) / 1000 
+kazi_vol = beton_vol * 1.05 
+ankraj_toplam_m = ankraj_adet * ankraj_L
+
+c_beton = beton_vol * p_beton
+c_demir = demir_ton * p_demir
+c_kazi = kazi_vol * p_kazi
+c_ankraj = ankraj_toplam_m * p_ankraj
+genel_toplam = c_beton + c_demir + c_kazi + c_ankraj
+
+# --- SONUÇLAR ---
+st.header(t["hesaplanan"])
+col1, col2, col3, col4 = st.columns(4)
+col1.metric(t["kalemler"][0], f"{beton_vol:,.1f} m³")
+col2.metric(t["kalemler"][1], f"{demir_ton:,.1f} Ton")
+col3.metric(t["kalemler"][2], f"{kazi_vol:,.1f} m³")
+col4.metric("Ankraj", f"{ankraj_toplam_m:,.0f} m")
+
+st.header(t["maliyet_analizi"])
+data = {
+    "Kalem / Статья": t["kalemler"],
+    "Maliyet / Стоимость (TL)": [f"{c_beton:,.0f}", f"{c_demir:,.0f}", f"{c_kazi:,.0f}", f"{c_ankraj:,.0f}"]
+}
+st.table(data)
+
+st.success(f"### {t['toplam']}: {genel_toplam:,.2f} TL")
+
+# Footer
+st.markdown("---")
+st.caption("Panda's Engineering Solutions - 2026")
